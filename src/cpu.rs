@@ -12,7 +12,7 @@ pub struct Cpu {
     // Memory: CHIP-8 has direct access to up to 4 kilobytes of RAM
     memory: [u8; MEMORY_SIZE],
     // Display: 64 x 32 pixels (or 128 x 64 for SUPER-CHIP) monochrome, ie. black or white
-    display: [[bool; DISPLAY_WIDTH]; DISPLAY_HEIGHT],
+    display: [bool; DISPLAY_WIDTH * DISPLAY_HEIGHT],
     // A program counter, often called just “PC”, which points at the current instruction in memory
     pc: u16,
     // One 16-bit index register called “I” which is used to point at locations in memory
@@ -55,7 +55,7 @@ impl Cpu {
         memory[80..160].clone_from_slice(&FONT);
         Cpu {
             memory: memory,
-            display: [[false; DISPLAY_WIDTH]; DISPLAY_HEIGHT],
+            display: [false; DISPLAY_WIDTH * DISPLAY_HEIGHT],
             pc: STARTING_ADDRESS,
             i: 0,
             stack: Vec::new(),
@@ -70,7 +70,33 @@ impl Cpu {
 
     }
 
-    fn decode_and_execute(&mut self) {
+    fn decode_and_execute(&mut self, ins: u16) {
+        match ins {
+            // clear screen
+            0x00E0 => {
+                for pixel in self.display.iter_mut() {
+                     *pixel = false; 
+                }
+            }
+            // jump
+            0x1000 ..= 0x1FFF => {
+                let jump_address = ins & 0x0FFF;
+                self.pc = jump_address;
+            }
+            // // set register VX
+            // 0x6XNN => {
+
+            // }
+            // // set index register I
+            // 0xANNN => {
+
+            // }
+            // // display/draw
+            // 0xDXYN => {
+
+            // }
+            _ => {}
+        }
 
     }
 
