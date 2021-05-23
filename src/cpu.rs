@@ -5,8 +5,10 @@ const MEMORY_SIZE: usize = 4096;
 const NUM_REGISTERS: usize = 16;
 const DISPLAY_WIDTH: usize = 64;
 const DISPLAY_HEIGHT: usize = 32;
-const STARTING_ADDRESS: u16 = 0x200;
 const NUM_KEYS: usize = 16;
+
+const STARTING_ADDRESS: u16 = 0x200;
+const FONT_SIZE: usize = 80;
 
 pub struct Cpu {
     // Memory: CHIP-8 has direct access to up to 4 kilobytes of RAM
@@ -29,7 +31,7 @@ pub struct Cpu {
     keys: [bool; NUM_KEYS]
 }
 
-const FONT: [u8; 80] = [
+const FONT: [u8; FONT_SIZE] = [
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -66,8 +68,16 @@ impl Cpu {
         }
     }
 
-    fn fetch(&mut self) {
+    pub fn run(&mut self) {
+        let ins : u16 = self.fetch();
+        self.decode_and_execute(ins);
+    }
 
+    fn fetch(&mut self) -> u16 {
+        let first_byte = self.memory[self.pc as usize];
+        let second_byte = self.memory[(self.pc) as usize];
+        self.pc += 2;
+        (first_byte as u16) << 8 | second_byte as u16
     }
 
     fn decode_and_execute(&mut self, ins: u16) {
@@ -97,10 +107,6 @@ impl Cpu {
             // }
             _ => {}
         }
-
-    }
-
-    pub fn run(&mut self) {
 
     }
 }
