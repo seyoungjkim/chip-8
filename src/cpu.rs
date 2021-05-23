@@ -73,6 +73,17 @@ impl Cpu {
         self.decode_and_execute(ins);
     }
 
+    fn decrement_timers(&mut self) {
+        if self.delay_timer > 0 {
+            self.delay_timer -= 1;
+        }
+
+        if self.sound_timer > 0 {
+            // TODO: beep
+            self.sound_timer -= 1;
+        }
+    }
+
     fn fetch(&mut self) -> u16 {
         let first_byte = self.memory[self.pc as usize];
         let second_byte = self.memory[(self.pc) as usize];
@@ -81,31 +92,91 @@ impl Cpu {
     }
 
     fn decode_and_execute(&mut self, ins: u16) {
-        match ins {
+        let opcode = (ins & 0xF000) >> 12;
+        let x = ((ins & 0x0F00) >> 8) as usize;
+        let y = ((ins & 0x00F0) >> 4) as usize;
+        let n = ins & 0x000F;
+        let nn = (ins & 0x0FF) as u8;
+        let nnn = ins * 0x0FFF;
+
+        match (opcode, x, y, n) {
             // clear screen
-            0x00E0 => {
+            (0, 0, 0xE, 0) => {
                 for pixel in self.display.iter_mut() {
-                     *pixel = false; 
+                    *pixel = false;
                 }
             }
-            // jump
-            0x1000 ..= 0x1FFF => {
-                let jump_address = ins & 0x0FFF;
-                self.pc = jump_address;
+            // return from subroutine
+            (0, 0, 0xE, 0xE) => {
+                let return_address = self.stack.pop().unwrap();
+                self.pc = return_address;
             }
-            // // set register VX
-            // 0x6XNN => {
+            // jump to NNN
+            (1, _, _, _) => {
+                self.pc = nnn;
+            }
+            // call subroutine at NNN
+            (2, _, _, _) => {
+                self.stack.push(self.pc);
+                self.pc = nnn;
+            }
+            // skip 1 instruction if VX == NN
+            (3, _, _, _) => {
+                if self.registers[x] == nn {
+                    self.pc += 2;
+                }
+            }
+            // skip 1 instruction if VX != NN
+            (4, _, _, _) => {
+                if self.registers[x] != nn {
+                    self.pc += 2;
+                }
+            }
+            // skip 1 instruction if VX == VY
+            (5, _, _, 0) => {
+                if self.registers[x] == self.registers[y] {
+                    self.pc += 2;
+                }
+            }
+            // skip 1 instruction if VX != VY
+            (9, _, _, 0) => {
+                if self.registers[x] == self.registers[y] {
+                    self.pc += 2;
+                }
+            }
+            // set register VX to NN
+            (6, _, _, _) => {
+                self.registers[x] = nn;
+            }
+            // add NN to register VX
+            (7, _, _, _) => {
+                self.registers[x] += nn;
+            }
+            // set VX to the value of VY
+            (8, _, _, 0) => {
+                self.registers[x] = self.registers[y];
+            }
+            // OR
+            (8, _, _, 1) => {
+                self.registers[x] = self.registers[x] | self.registers[y];
+            }
+            // AND
+            (8, _, _, 2) => {
+                self.registers[x] = self.registers[x] & self.registers[y];
+            }
+            // XOR
+            (8, _, _, 3) => {
+                self.registers[x] = self.registers[x] ^ self.registers[y];
+            }
+            // set index register to NNN
+            (0xA, _, _, _) => {
+                self.i = nnn;
+            }
+            // display/draw
+            (0xD, _, _, _) => {
 
-            // }
-            // // set index register I
-            // 0xANNN => {
-
-            // }
-            // // display/draw
-            // 0xDXYN => {
-
-            // }
-            _ => {}
+            }
+            _ => return
         }
 
     }
