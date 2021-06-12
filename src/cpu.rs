@@ -1,4 +1,5 @@
 use std::vec::Vec;
+use rand::Rng;
 
 const MEMORY_SIZE: usize = 4096;
 const NUM_REGISTERS: usize = 16;
@@ -199,15 +200,63 @@ impl Cpu {
             (0xA, _, _, _) => {
                 self.i = nnn;
             }
+            // jump to NNN + V0
             (0xB, _, _, _) => {
-                // TODO
+                self.pc = nnn + (self.registers[0] as u16);
             }
+            // set VX = random number & NN
             (0xC, _, _, _) => {
-                // TODO
+                let random_num: u8 = rand::thread_rng().gen();
+                self.registers[x] = random_num & nn;
             }
             // display/draw
             (0xD, _, _, _) => {
-                // TODO
+                // TODO: implement display instruction
+            }
+            // skip if key corresponding to VX is pressed
+            (0xE, _, 9, 0xE) => {
+                let key = self.registers[x] as usize;
+                if self.keys[key] {
+                    self.pc += 2;
+                }
+            }
+            // skip if key corresponding to VX is not pressed
+            (0xE, _, 0xA, 1) => {
+                let key = self.registers[x] as usize;
+                if !self.keys[key] {
+                    self.pc += 2;
+                }
+            }
+            // set VX to value of delay timers
+            (0xF, _, 0, 7) => {
+                self.registers[x] = self.delay_timer;
+            }
+            // set delay timer to value of VX
+            (0xF, _, 1, 5) => {
+                self.delay_timer = self.registers[x];
+            }
+            // set sound timer to value of VX
+            (0xF, _, 1, 8) => {
+                self.sound_timer = self.registers[x];
+            }
+            // TODO: implement remaining instructions
+            (0xF, _, 1, 0xE) => {
+
+            }
+            (0xF, _, 0, 0xA) => {
+
+            }
+            (0xF, _, 2, 9) => {
+
+            }
+            (0xF, _, 3, 3) => {
+
+            }
+            (0xF, _, 5, 5) => {
+
+            }
+            (0xF, _, 6, 5) => {
+                
             }
             _ => return
         }
