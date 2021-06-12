@@ -1,6 +1,5 @@
 use std::vec::Vec;
 
-const STACK_SIZE: usize = 16;
 const MEMORY_SIZE: usize = 4096;
 const NUM_REGISTERS: usize = 16;
 const DISPLAY_WIDTH: usize = 64;
@@ -52,7 +51,6 @@ const FONT: [u8; FONT_SIZE] = [
 
 impl Cpu {
     pub fn new() -> Cpu {
-        // TODO: initialize correct values
         let mut memory = [0; MEMORY_SIZE];
         memory[80..160].clone_from_slice(&FONT);
         Cpu {
@@ -69,6 +67,8 @@ impl Cpu {
     }
 
     pub fn run(&mut self) {
+        // TODO: implement loop
+        self.decrement_timers();
         let ins : u16 = self.fetch();
         self.decode_and_execute(ins);
     }
@@ -156,25 +156,58 @@ impl Cpu {
             (8, _, _, 0) => {
                 self.registers[x] = self.registers[y];
             }
-            // OR
+            // set VX = VX OR VY
             (8, _, _, 1) => {
                 self.registers[x] = self.registers[x] | self.registers[y];
             }
-            // AND
+            // set VX = VX AND VY
             (8, _, _, 2) => {
                 self.registers[x] = self.registers[x] & self.registers[y];
             }
-            // XOR
+            // set VX = VX XOR VY
             (8, _, _, 3) => {
                 self.registers[x] = self.registers[x] ^ self.registers[y];
+            }
+            // set VX = VX + VY
+            (8, _, _, 4) => {
+                let (new_vx_value, result_overflowed) =
+                    self.registers[x].overflowing_add(self.registers[y]);
+                self.registers[x] = new_vx_value;
+                self.registers[0xF] = if result_overflowed { 1 } else { 0 };
+            }
+            // set VX = VX - VY
+            (8, _, _, 5) => {
+                self.registers[x] = self.registers[x] - self.registers[y];
+                self.registers[0xF] = if self.registers[x] > self.registers[y] { 1 } else { 0 };
+            }
+            // shift VX 1 bit right
+            (8, _, _, 6) => {
+                self.registers[0xF] = self.registers[x] & 1;
+                self.registers[x] >>= 1;
+            }
+            // set VX = VY - VX
+            (8, _, _, 7) => {
+                self.registers[x] = self.registers[y] - self.registers[x];
+                self.registers[0xF] = if self.registers[y] > self.registers[x] { 1 } else { 0 };
+            }
+            // shift VX 1 bit left
+            (8, _, _, 0xE) => {
+                self.registers[0xF] = self.registers[x] >> 7;
+                self.registers[x] <<= self.registers[x];
             }
             // set index register to NNN
             (0xA, _, _, _) => {
                 self.i = nnn;
             }
+            (0xB, _, _, _) => {
+                // TODO
+            }
+            (0xC, _, _, _) => {
+                // TODO
+            }
             // display/draw
             (0xD, _, _, _) => {
-
+                // TODO
             }
             _ => return
         }
