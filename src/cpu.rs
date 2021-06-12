@@ -239,16 +239,31 @@ impl Cpu {
             (0xF, _, 1, 8) => {
                 self.sound_timer = self.registers[x];
             }
-            // TODO: implement remaining instructions
+            // set index = index + VX
             (0xF, _, 1, 0xE) => {
-
+                self.i = self.i + (self.registers[x] as u16);
+                self.registers[0xF] = if self.i > 0x0FFF { 1 } else { 0 };
             }
+            // block until key is pressed
             (0xF, _, 0, 0xA) => {
-
+                let mut is_key_pressed = false;
+                for k in 0..self.keys.len() {
+                    if self.keys[k] {
+                    self.registers[x] = k as u8;
+                    is_key_pressed = true;
+                    break;
+                }
+                }
+                if !is_key_pressed {
+                    self.pc -= 2;
+                }
             }
+            // index stores hex character in VX
             (0xF, _, 2, 9) => {
-
+                let char_address = (self.registers[x] * 5 + 80) as usize;
+                self.i = self.memory[char_address] as u16;
             }
+            // TODO: implement remaining instructions
             (0xF, _, 3, 3) => {
 
             }
@@ -256,7 +271,7 @@ impl Cpu {
 
             }
             (0xF, _, 6, 5) => {
-                
+
             }
             _ => return
         }
