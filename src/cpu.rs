@@ -139,12 +139,6 @@ impl Cpu {
                     self.pc += 2;
                 }
             }
-            // skip 1 instruction if VX != VY
-            (9, _, _, 0) => {
-                if self.registers[x] == self.registers[y] {
-                    self.pc += 2;
-                }
-            }
             // set register VX to NN
             (6, _, _, _) => {
                 self.registers[x] = nn;
@@ -195,6 +189,12 @@ impl Cpu {
             (8, _, _, 0xE) => {
                 self.registers[0xF] = self.registers[x] >> 7;
                 self.registers[x] <<= self.registers[x];
+            }
+            // skip 1 instruction if VX != VY
+            (9, _, _, 0) => {
+                if self.registers[x] == self.registers[y] {
+                    self.pc += 2;
+                }
             }
             // set index register to NNN
             (0xA, _, _, _) => {
@@ -263,15 +263,23 @@ impl Cpu {
                 let char_address = (self.registers[x] * 5 + 80) as usize;
                 self.i = self.memory[char_address] as u16;
             }
-            // TODO: implement remaining instructions
+            // store digits of VX in memory
             (0xF, _, 3, 3) => {
-
+                self.memory[self.i as usize] = self.registers[x] / 100;
+                self.memory[(self.i+1) as usize] = (self.registers[x] / 10) % 10;
+                self.memory[(self.i+2) as usize] = self.registers[x] % 10;
             }
+            // store register values in memory
             (0xF, _, 5, 5) => {
-
+                for j in 0..self.registers.len() {
+                    self.memory[(self.i as usize) + j] = self.registers[j];
+                }
             }
+            // load register values from memory
             (0xF, _, 6, 5) => {
-
+                for j in 0..self.registers.len() {
+                    self.registers[j] = self.memory[(self.i as usize) + j];
+                }
             }
             _ => return
         }
