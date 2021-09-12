@@ -1,10 +1,10 @@
-use std::vec::Vec;
 use rand::Rng;
+use std::vec::Vec;
 
 const MEMORY_SIZE: usize = 4096;
 const NUM_REGISTERS: usize = 16;
-const DISPLAY_WIDTH: usize = 64;
-const DISPLAY_HEIGHT: usize = 32;
+pub const DISPLAY_WIDTH: usize = 64;
+pub const DISPLAY_HEIGHT: usize = 32;
 const NUM_KEYS: usize = 16;
 
 const STARTING_ADDRESS: u16 = 0x200;
@@ -14,7 +14,7 @@ pub struct Cpu {
     // Memory: CHIP-8 has direct access to up to 4 kilobytes of RAM
     memory: [u8; MEMORY_SIZE],
     // Display: 64 x 32 pixels (or 128 x 64 for SUPER-CHIP) monochrome, ie. black or white
-    display: [bool; DISPLAY_WIDTH * DISPLAY_HEIGHT],
+    pub display: [bool; DISPLAY_WIDTH * DISPLAY_HEIGHT],
     // A program counter, often called just “PC”, which points at the current instruction in memory
     pc: u16,
     // One 16-bit index register called “I” which is used to point at locations in memory
@@ -28,7 +28,7 @@ pub struct Cpu {
     // 16 8-bit (one byte) general-purpose variable registers numbered 0 through F hexadecimal, ie. 0 through 15 in decimal, called V0 through `VF
     // VF is also used as a flag register; many instructions will set it to either 1 or 0 based on some rule, for example using it as a carry flag
     registers: [u8; NUM_REGISTERS],
-    keys: [bool; NUM_KEYS]
+    keys: [bool; NUM_KEYS],
 }
 
 const FONT: [u8; FONT_SIZE] = [
@@ -47,7 +47,7 @@ const FONT: [u8; FONT_SIZE] = [
     0xF0, 0x80, 0x80, 0x80, 0xF0, // C
     0xE0, 0x90, 0x90, 0x90, 0xE0, // D
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+    0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
 
 impl Cpu {
@@ -55,7 +55,7 @@ impl Cpu {
         let mut memory = [0; MEMORY_SIZE];
         memory[80..160].clone_from_slice(&FONT);
         Cpu {
-            memory: memory,
+            memory,
             display: [false; DISPLAY_WIDTH * DISPLAY_HEIGHT],
             pc: STARTING_ADDRESS,
             i: 0,
@@ -67,10 +67,20 @@ impl Cpu {
         }
     }
 
+    pub fn press_key(&mut self, key: usize) {
+        self.keys[key] = true;
+    }
+
+    pub fn load_rom(&mut self, rom: &[u8]) {
+        let start: usize = STARTING_ADDRESS as usize;
+        let end: usize = STARTING_ADDRESS as usize + rom.len();
+        self.memory[start..end].clone_from_slice(rom);
+    }
+
     pub fn run(&mut self) {
         // TODO: implement loop
         self.decrement_timers();
-        let ins : u16 = self.fetch();
+        let ins: u16 = self.fetch();
         self.decode_and_execute(ins);
     }
 
@@ -179,7 +189,11 @@ impl Cpu {
             // set VX = VX - VY
             (8, _, _, 5) => {
                 self.registers[x] = self.registers[x] - self.registers[y];
-                self.registers[0xF] = if self.registers[x] > self.registers[y] { 1 } else { 0 };
+                self.registers[0xF] = if self.registers[x] > self.registers[y] {
+                    1
+                } else {
+                    0
+                };
             }
             // shift VX 1 bit right
             (8, _, _, 6) => {
@@ -189,7 +203,11 @@ impl Cpu {
             // set VX = VY - VX
             (8, _, _, 7) => {
                 self.registers[x] = self.registers[y] - self.registers[x];
-                self.registers[0xF] = if self.registers[y] > self.registers[x] { 1 } else { 0 };
+                self.registers[0xF] = if self.registers[y] > self.registers[x] {
+                    1
+                } else {
+                    0
+                };
             }
             // shift VX 1 bit left
             (8, _, _, 0xE) => {
@@ -219,17 +237,20 @@ impl Cpu {
                     for k in 0..8 {
                         let pixel = sprite & (0b10000000 >> k);
                         // crop
-                        if DISPLAY_WIDTH <= x_coord as usize + j || DISPLAY_HEIGHT <= y_coord as usize + k {
+                        if DISPLAY_WIDTH <= x_coord as usize + j
+                            || DISPLAY_HEIGHT <= y_coord as usize + k
+                        {
                             continue;
                         }
-                        let display_index = (x_coord as usize + j) * DISPLAY_WIDTH + DISPLAY_HEIGHT + k;
+                        let display_index =
+                            (x_coord as usize + j) * DISPLAY_WIDTH + DISPLAY_HEIGHT + k;
                         if pixel == 1 {
                             if self.display[display_index] {
                                 self.display[display_index] = false;
                                 self.registers[0xF] = 1;
-                            }
-                            else {
-                                self.display[x_coord as usize * DISPLAY_WIDTH + DISPLAY_HEIGHT] = true;
+                            } else {
+                                self.display[x_coord as usize * DISPLAY_WIDTH + DISPLAY_HEIGHT] =
+                                    true;
                             }
                         }
                     }
@@ -271,10 +292,10 @@ impl Cpu {
                 let mut is_key_pressed = false;
                 for k in 0..self.keys.len() {
                     if self.keys[k] {
-                    self.registers[x] = k as u8;
-                    is_key_pressed = true;
-                    break;
-                }
+                        self.registers[x] = k as u8;
+                        is_key_pressed = true;
+                        break;
+                    }
                 }
                 if !is_key_pressed {
                     self.pc -= 2;
@@ -303,8 +324,7 @@ impl Cpu {
                     self.registers[j] = self.memory[self.i as usize + j];
                 }
             }
-            _ => return
+            _ => return,
         }
-
     }
 }
