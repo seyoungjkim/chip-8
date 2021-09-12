@@ -139,6 +139,12 @@ impl Cpu {
                     self.pc += 2;
                 }
             }
+            // skip 1 instruction if VX != VY
+            (9, _, _, 0) => {
+                if self.registers[x] == self.registers[y] {
+                    self.pc += 2;
+                }
+            }
             // set register VX to NN
             (6, _, _, _) => {
                 self.registers[x] = nn;
@@ -190,12 +196,6 @@ impl Cpu {
                 self.registers[0xF] = self.registers[x] >> 7;
                 self.registers[x] <<= self.registers[x];
             }
-            // skip 1 instruction if VX != VY
-            (9, _, _, 0) => {
-                if self.registers[x] == self.registers[y] {
-                    self.pc += 2;
-                }
-            }
             // set index register to NNN
             (0xA, _, _, _) => {
                 self.i = nnn;
@@ -211,7 +211,29 @@ impl Cpu {
             }
             // display/draw
             (0xD, _, _, _) => {
-                // TODO: implement display instruction
+                let x_coord = self.registers[x] % DISPLAY_WIDTH as u8;
+                let y_coord = self.registers[y] % DISPLAY_HEIGHT as u8;
+                self.registers[0xF] = 0;
+                for j in 0..n as usize {
+                    let sprite = self.memory[self.i as usize + j];
+                    for k in 0..8 {
+                        let pixel = sprite & (0b10000000 >> k);
+                        // crop
+                        if DISPLAY_WIDTH <= x_coord as usize + j || DISPLAY_HEIGHT <= y_coord as usize + k {
+                            continue;
+                        }
+                        let display_index = (x_coord as usize + j) * DISPLAY_WIDTH + DISPLAY_HEIGHT + k;
+                        if pixel == 1 {
+                            if self.display[display_index] {
+                                self.display[display_index] = false;
+                                self.registers[0xF] = 1;
+                            }
+                            else {
+                                self.display[x_coord as usize * DISPLAY_WIDTH + DISPLAY_HEIGHT] = true;
+                            }
+                        }
+                    }
+                }
             }
             // skip if key corresponding to VX is pressed
             (0xE, _, 9, 0xE) => {
@@ -266,19 +288,19 @@ impl Cpu {
             // store digits of VX in memory
             (0xF, _, 3, 3) => {
                 self.memory[self.i as usize] = self.registers[x] / 100;
-                self.memory[(self.i+1) as usize] = (self.registers[x] / 10) % 10;
-                self.memory[(self.i+2) as usize] = self.registers[x] % 10;
+                self.memory[self.i as usize + 1] = (self.registers[x] / 10) % 10;
+                self.memory[self.i as usize + 2] = self.registers[x] % 10;
             }
             // store register values in memory
             (0xF, _, 5, 5) => {
                 for j in 0..self.registers.len() {
-                    self.memory[(self.i as usize) + j] = self.registers[j];
+                    self.memory[self.i as usize + j] = self.registers[j];
                 }
             }
             // load register values from memory
             (0xF, _, 6, 5) => {
                 for j in 0..self.registers.len() {
-                    self.registers[j] = self.memory[(self.i as usize) + j];
+                    self.registers[j] = self.memory[self.i as usize + j];
                 }
             }
             _ => return
