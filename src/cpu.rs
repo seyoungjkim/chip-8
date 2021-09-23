@@ -230,21 +230,19 @@ impl Cpu {
                     let sprite = self.memory[self.i as usize + j];
                     for k in 0..8 {
                         let pixel = sprite & (0b10000000 >> k);
+                        let curr_x = x_coord as usize + j;
+                        let curr_y = y_coord as usize + k;
                         // crop
-                        if DISPLAY_WIDTH <= x_coord as usize + j
-                            || DISPLAY_HEIGHT <= y_coord as usize + k
-                        {
+                        if DISPLAY_WIDTH <= curr_x || DISPLAY_HEIGHT <= curr_y {
                             continue;
                         }
-                        let display_index =
-                            (x_coord as usize + j) * DISPLAY_WIDTH + DISPLAY_HEIGHT + k;
-                        if pixel == 1 {
+                        let display_index = curr_x * DISPLAY_HEIGHT + curr_y;
+                        if pixel > 0 {
                             if self.display[display_index] {
                                 self.display[display_index] = false;
                                 self.registers[0xF] = 1;
                             } else {
-                                self.display[x_coord as usize * DISPLAY_WIDTH + DISPLAY_HEIGHT] =
-                                    true;
+                                self.display[display_index] = true;
                             }
                         }
                     }

@@ -41,13 +41,13 @@ fn main() {
         cpu.run_loop();
 
         for (index, is_on) in cpu.display.iter().enumerate() {
-            if *is_on {
-                for i in index * SCALE..index * SCALE + SCALE * SCALE {
-                    buffer[i] = 0xFFFFFF;
-                }
-            } else {
-                for i in index * SCALE..index * SCALE + SCALE * SCALE {
-                    buffer[i] = 0;
+            let x = (index / cpu::DISPLAY_HEIGHT) as usize;
+            let y = (index % cpu::DISPLAY_HEIGHT) as usize;
+            let x_coord = x * SCALE;
+            let y_coord = y * SCALE;
+            for i in x_coord..x_coord + SCALE {
+                for j in y_coord..y_coord + SCALE {
+                    buffer[i * WINDOW_HEIGHT + j] = if *is_on { 0xFFFFFF } else { 0 };
                 }
             }
         }
