@@ -67,18 +67,18 @@ impl Cpu {
         }
     }
 
-    pub fn press_key(&mut self, key: usize) {
-        self.keys[key] = true;
-    }
+    // pub fn press_key(&mut self, key: usize) {
+    //     self.keys[key] = true;
+    // }
 
     pub fn load_rom(&mut self, rom: &[u8]) {
+        print!("Loading rom data");
         let start: usize = STARTING_ADDRESS as usize;
         let end: usize = STARTING_ADDRESS as usize + rom.len();
-        self.memory[start..end].clone_from_slice(rom);
+        self.memory[start..end].copy_from_slice(rom);
     }
 
-    pub fn run(&mut self) {
-        // TODO: implement loop
+    pub fn run_loop(&mut self) {
         self.decrement_timers();
         let ins: u16 = self.fetch();
         self.decode_and_execute(ins);
@@ -108,7 +108,7 @@ impl Cpu {
         let y = ((ins & 0x00F0) >> 4) as usize;
         let n = ins & 0x000F;
         let nn = (ins & 0x0FF) as u8;
-        let nnn = ins * 0x0FFF;
+        let nnn = ins & 0x0FFF;
 
         match (opcode, x, y, n) {
             // clear screen
@@ -161,7 +161,7 @@ impl Cpu {
             }
             // add NN to register VX
             (7, _, _, _) => {
-                self.registers[x] += nn;
+                self.registers[x] = self.registers[x].wrapping_add(nn);
             }
             // set VX to the value of VY
             (8, _, _, 0) => {
@@ -188,12 +188,9 @@ impl Cpu {
             }
             // set VX = VX - VY
             (8, _, _, 5) => {
-                self.registers[x] = self.registers[x] - self.registers[y];
-                self.registers[0xF] = if self.registers[x] > self.registers[y] {
-                    1
-                } else {
-                    0
-                };
+                let (diff, borrow) = self.registers[x].overflowing_sub(self.registers[y]);
+                self.registers[0xF] = if borrow { 0 } else { 1 };
+                self.registers[y] = diff;
             }
             // shift VX 1 bit right
             (8, _, _, 6) => {
@@ -202,12 +199,9 @@ impl Cpu {
             }
             // set VX = VY - VX
             (8, _, _, 7) => {
-                self.registers[x] = self.registers[y] - self.registers[x];
-                self.registers[0xF] = if self.registers[y] > self.registers[x] {
-                    1
-                } else {
-                    0
-                };
+                let (diff, borrow) = self.registers[y].overflowing_sub(self.registers[x]);
+                self.registers[0xF] = if borrow { 0 } else { 1 };
+                self.registers[x] = diff;
             }
             // shift VX 1 bit left
             (8, _, _, 0xE) => {
