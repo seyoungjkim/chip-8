@@ -67,10 +67,9 @@ impl Cpu {
         }
     }
 
-    // TODO: add keyboard input
-    // pub fn press_key(&mut self, key: usize) {
-    //     self.keys[key] = true;
-    // }
+    pub fn press_key(&mut self, is_pressed: bool, key: usize) {
+        self.keys[key] = is_pressed;
+    }
 
     pub fn load_rom(&mut self, rom: &[u8]) {
         let start: usize = STARTING_ADDRESS as usize;

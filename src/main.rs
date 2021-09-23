@@ -56,5 +56,37 @@ fn main() {
         window
             .update_with_buffer(&buffer, WINDOW_WIDTH, WINDOW_HEIGHT)
             .unwrap();
+
+        // Get keyboard input
+        window.get_keys().map(|keys| {
+            for k in keys {
+                match map_key(k) {
+                    Some(i) => cpu.press_key(window.is_key_down(k), i),
+                    None => (),
+                }
+            }
+        });
+    }
+}
+
+fn map_key(key: Key) -> Option<usize> {
+    match key {
+        Key::Key0 => Some(0),
+        Key::Key1 => Some(1),
+        Key::Key2 => Some(2),
+        Key::Key3 => Some(3),
+        Key::Q => Some(4),
+        Key::W => Some(5),
+        Key::E => Some(6),
+        Key::R => Some(7),
+        Key::A => Some(8),
+        Key::S => Some(9),
+        Key::D => Some(10),
+        Key::F => Some(11),
+        Key::Z => Some(12),
+        Key::X => Some(13),
+        Key::C => Some(14),
+        Key::V => Some(15),
+        _ => None,
     }
 }
