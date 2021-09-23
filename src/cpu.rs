@@ -67,12 +67,12 @@ impl Cpu {
         }
     }
 
+    // TODO: add keyboard input
     // pub fn press_key(&mut self, key: usize) {
     //     self.keys[key] = true;
     // }
 
     pub fn load_rom(&mut self, rom: &[u8]) {
-        print!("Loading rom data");
         let start: usize = STARTING_ADDRESS as usize;
         let end: usize = STARTING_ADDRESS as usize + rom.len();
         self.memory[start..end].copy_from_slice(rom);
@@ -97,7 +97,7 @@ impl Cpu {
 
     fn fetch(&mut self) -> u16 {
         let first_byte = self.memory[self.pc as usize];
-        let second_byte = self.memory[(self.pc) as usize];
+        let second_byte = self.memory[(self.pc + 1) as usize];
         self.pc += 2;
         (first_byte as u16) << 8 | second_byte as u16
     }
@@ -107,8 +107,8 @@ impl Cpu {
         let x = ((ins & 0x0F00) >> 8) as usize;
         let y = ((ins & 0x00F0) >> 4) as usize;
         let n = ins & 0x000F;
-        let nn = (ins & 0x0FF) as u8;
-        let nnn = ins & 0x0FFF;
+        let nn = (ins & 0xFF) as u8;
+        let nnn = ins & 0xFFF;
 
         match (opcode, x, y, n) {
             // clear screen
@@ -228,22 +228,20 @@ impl Cpu {
                 self.registers[0xF] = 0;
                 for j in 0..n as usize {
                     let sprite = self.memory[self.i as usize + j];
-                    for k in 0..8 {
-                        let pixel = sprite & (0b10000000 >> k);
-                        let curr_x = x_coord as usize + j;
-                        let curr_y = y_coord as usize + k;
-                        // crop
-                        if DISPLAY_WIDTH <= curr_x || DISPLAY_HEIGHT <= curr_y {
+                    for i in 0..8 {
+                        let pixel = sprite & (0b10000000 >> i);
+                        let curr_x = x_coord as usize + i;
+                        let curr_y = y_coord as usize + j;
+                        if pixel == 0 || DISPLAY_WIDTH <= curr_x || DISPLAY_HEIGHT <= curr_y {
                             continue;
                         }
-                        let display_index = curr_x * DISPLAY_HEIGHT + curr_y;
-                        if pixel > 0 {
-                            if self.display[display_index] {
-                                self.display[display_index] = false;
-                                self.registers[0xF] = 1;
-                            } else {
-                                self.display[display_index] = true;
-                            }
+                        // set display
+                        let display_index = curr_x + DISPLAY_WIDTH * curr_y;
+                        if self.display[display_index] {
+                            self.display[display_index] = false;
+                            self.registers[0xF] = 1;
+                        } else {
+                            self.display[display_index] = true;
                         }
                     }
                 }
