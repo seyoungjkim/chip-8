@@ -24,7 +24,7 @@ fn main() {
     let mut buffer: Vec<u32> = vec![0; WINDOW_WIDTH * WINDOW_HEIGHT];
 
     let mut window = Window::new(
-        "Chip-8",
+        "CHIP-8",
         WINDOW_WIDTH,
         WINDOW_HEIGHT,
         WindowOptions::default(),
