@@ -302,14 +302,14 @@ impl Cpu {
                 self.memory[self.i as usize + 2] = self.registers[x] % 10;
             }
             // store register values in memory
-            (0xF, _, 5, 5) => {
-                for j in 0..self.registers.len() {
+            (0xF, x, 5, 5) => {
+                for j in 0..x+1 {
                     self.memory[self.i as usize + j] = self.registers[j];
                 }
             }
             // load register values from memory
-            (0xF, _, 6, 5) => {
-                for j in 0..self.registers.len() {
+            (0xF, x, 6, 5) => {
+                for j in 0..x+1 {
                     self.registers[j] = self.memory[self.i as usize + j];
                 }
             }
