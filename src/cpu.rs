@@ -150,7 +150,7 @@ impl Cpu {
             }
             // skip 1 instruction if VX != VY
             (9, _, _, 0) => {
-                if self.registers[x] == self.registers[y] {
+                if self.registers[x] != self.registers[y] {
                     self.pc += 2;
                 }
             }
@@ -189,7 +189,7 @@ impl Cpu {
             (8, _, _, 5) => {
                 let (diff, borrow) = self.registers[x].overflowing_sub(self.registers[y]);
                 self.registers[0xF] = if borrow { 0 } else { 1 };
-                self.registers[y] = diff;
+                self.registers[x] = diff;
             }
             // shift VX 1 bit right
             (8, _, _, 6) => {
@@ -205,7 +205,7 @@ impl Cpu {
             // shift VX 1 bit left
             (8, _, _, 0xE) => {
                 self.registers[0xF] = self.registers[x] >> 7;
-                self.registers[x] <<= self.registers[x];
+                self.registers[x] <<= 1;
             }
             // set index register to NNN
             (0xA, _, _, _) => {

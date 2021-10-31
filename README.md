@@ -12,3 +12,5 @@ For the frontend, I used the [minifb](https://github.com/emoon/rust_minifb) crat
 ## Resources Used
 * https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
 * https://aquova.net/chip8/chip8.pdf
+* https://github.com/corax89/chip8-test-rom
+* https://www.zophar.net/pdroms/chip8/chip-8-games-pack.html

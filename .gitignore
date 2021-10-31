@@ -12,7 +12,7 @@ Cargo.lock
 # Added by cargo
 /target
 
-# Test ROMs from https://www.zophar.net/pdroms/chip8/chip-8-games-pack.html
+# Test ROMs
 /games
 
 # VSCode
