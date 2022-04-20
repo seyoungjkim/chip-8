@@ -9,9 +9,13 @@ mod cpu;
 const SCALE: usize = 20;
 
 fn main() {
-    let args: Vec<_> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
     // Load rom data into emulator
+    if args.len() < 2 {
+        print!("Please specify game file");
+        return
+    }
     let rom_file_path = &args[1];
     print!("Playing rom {}\n", rom_file_path);
     let mut cpu = cpu::Cpu::new();

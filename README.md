@@ -4,8 +4,10 @@ This project is (yet another) Rust CHIP-8 Interpreter. It's my first project exp
 
 For the frontend, I used the [minifb](https://github.com/emoon/rust_minifb) crate to display a window.
 
+## Usage
+Run `cargo run $PROGRAM_FILENAME` to run a Chip-8 program. On Windows, make sure [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) are installed to run Rust programs.
+
 ## Future Work
-* Test on Windows
 * Display in the browser
 * Port to Android
 
