@@ -16,3 +16,4 @@ Run `cargo run $PROGRAM_FILENAME` to run a Chip-8 program. On Windows, make sure
 * https://aquova.net/chip8/chip8.pdf
 * https://github.com/corax89/chip8-test-rom
 * https://www.zophar.net/pdroms/chip8/chip-8-games-pack.html
+* https://github.com/Timendus/chip8-test-suite
