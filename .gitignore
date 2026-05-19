@@ -13,7 +13,7 @@ Cargo.lock
 /target
 
 # Test ROMs
-/games
+/tests
 
 # VSCode
 /.vscode

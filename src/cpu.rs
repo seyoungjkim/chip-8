@@ -9,6 +9,7 @@ const NUM_KEYS: usize = 16;
 
 const STARTING_ADDRESS: u16 = 0x200;
 const FONT_SIZE: usize = 80;
+const INSTRUCTIONS_PER_SEC: u16 = 500;
 
 pub struct Cpu {
     // Memory: CHIP-8 has direct access to up to 4 kilobytes of RAM
@@ -67,8 +68,12 @@ impl Cpu {
         }
     }
 
-    pub fn press_key(&mut self, is_pressed: bool, key: usize) {
-        self.keys[key] = is_pressed;
+    pub fn press_key(&mut self, key: usize) {
+        self.keys[key] = true;
+    }
+
+    pub fn release_key(&mut self, key: usize) {
+        self.keys[key] = false
     }
 
     pub fn load_rom(&mut self, rom: &[u8]) {
@@ -79,8 +84,10 @@ impl Cpu {
 
     pub fn run_loop(&mut self) {
         self.decrement_timers();
-        let ins: u16 = self.fetch();
-        self.decode_and_execute(ins);
+        for _ in 0..INSTRUCTIONS_PER_SEC {
+            let ins: u16 = self.fetch();
+            self.decode_and_execute(ins);
+        }
     }
 
     fn decrement_timers(&mut self) {
@@ -279,6 +286,7 @@ impl Cpu {
                 self.registers[0xF] = if self.i > 0x0FFF { 1 } else { 0 };
             }
             // block until key is pressed
+            // TODO: only advance when key is pressed then released. Need some way to track this.
             (0xF, _, 0, 0xA) => {
                 let mut is_key_pressed = false;
                 for k in 0..self.keys.len() {

@@ -56,11 +56,11 @@ fn main() {
             }
         }
 
-        // Get keyboard input
-        window.get_keys().map(|keys| {
+        // Get keyboard input changes
+        window.get_keys_pressed(minifb::KeyRepeat::No).map(|keys| {
             for k in keys {
                 match map_key(k) {
-                    Some(i) => cpu.press_key(true, i),
+                    Some(i) => cpu.press_key(i),
                     None => (),
                 }
             }
@@ -68,7 +68,7 @@ fn main() {
         window.get_keys_released().map(|keys| {
             for k in keys {
                 match map_key(k) {
-                    Some(i) => cpu.press_key(false, i),
+                    Some(i) => cpu.release_key(i),
                     None => (),
                 }
             }
@@ -83,21 +83,21 @@ fn main() {
 
 fn map_key(key: Key) -> Option<usize> {
     match key {
-        Key::Key1 => Some(0),
-        Key::Key2 => Some(1),
-        Key::Key3 => Some(2),
-        Key::Key4 => Some(3),
+        Key::Key1 => Some(1),
+        Key::Key2 => Some(2),
+        Key::Key3 => Some(3),
+        Key::Key4 => Some(12),
         Key::Q => Some(4),
         Key::W => Some(5),
         Key::E => Some(6),
-        Key::R => Some(7),
-        Key::A => Some(8),
-        Key::S => Some(9),
-        Key::D => Some(10),
-        Key::F => Some(11),
-        Key::Z => Some(12),
-        Key::X => Some(13),
-        Key::C => Some(14),
+        Key::R => Some(13),
+        Key::A => Some(7),
+        Key::S => Some(8),
+        Key::D => Some(9),
+        Key::F => Some(14),
+        Key::Z => Some(10),
+        Key::X => Some(0),
+        Key::C => Some(11),
         Key::V => Some(15),
         _ => None,
     }

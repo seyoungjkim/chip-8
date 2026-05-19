@@ -8,8 +8,11 @@ For the frontend, I used the [minifb](https://github.com/emoon/rust_minifb) crat
 Run `cargo run $PROGRAM_FILENAME` to run a Chip-8 program. On Windows, make sure [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) are installed to run Rust programs.
 
 ## Future Work
-* Display in the browser
-* Port to Android
+* Fix tests from https://github.com/Timendus/chip8-test-suite:
+    * Interpreter doesn't address Chip-8 quirks
+    * Interpreter doesn't wait for key release (Fx0A GETKEY)
+* Make sound timer beep
+* Port to browser
 
 ## Resources Used
 * https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
