@@ -1,0 +1,99 @@
+extern crate minifb;
+extern crate rand;
+use minifb::{Key, Window, WindowOptions};
+use std::env;
+use std::fs;
+
+mod cpu;
+
+const SCALE: usize = 20;
+
+pub fn run_chip_8() {
+    let args: Vec<String> = env::args().collect();
+
+    // Load rom data into emulator
+    if args.len() < 2 {
+        print!("Please specify game file");
+        return
+    }
+    let rom_file_path = &args[1];
+    print!("Playing rom {}\n", rom_file_path);
+    let mut cpu = cpu::Cpu::new();
+    let rom_data = fs::read(rom_file_path).expect("Error reading file");
+    cpu.load_rom(&rom_data);
+
+    // Create window
+    const WINDOW_WIDTH: usize = cpu::DISPLAY_WIDTH * SCALE;
+    const WINDOW_HEIGHT: usize = cpu::DISPLAY_HEIGHT * SCALE;
+    let mut buffer: Vec<u32> = vec![0; WINDOW_WIDTH * WINDOW_HEIGHT];
+
+    let mut window = Window::new(
+        "CHIP-8",
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        WindowOptions::default(),
+    )
+    .unwrap_or_else(|e| {
+        panic!("{}", e);
+    });
+
+    window.set_target_fps(60);
+
+    // Game loop
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        cpu.run_loop();
+
+        for (index, is_on) in cpu.display.iter().enumerate() {
+            let x = (index % cpu::DISPLAY_WIDTH) as usize;
+            let y = (index / cpu::DISPLAY_WIDTH) as usize;
+            let x_coord = x * SCALE;
+            let y_coord = y * SCALE;
+            for i in x_coord..x_coord + SCALE {
+                for j in y_coord..y_coord + SCALE {
+                    buffer[i + WINDOW_WIDTH * j] = if *is_on { 0xFFFFFF } else { 0 };
+                }
+            }
+        }
+
+        // Get keyboard input changes
+        for key in window.get_keys_pressed(minifb::KeyRepeat::No) {
+            match map_key(key) {
+                Some(i) => cpu.press_key(i),
+                None => (),
+            }
+        }
+        for key in window.get_keys_released() {
+            match map_key(key) {
+                Some(i) => cpu.release_key(i),
+                None => (),
+            }
+        };
+
+        // Exit on failure
+        window
+            .update_with_buffer(&buffer, WINDOW_WIDTH, WINDOW_HEIGHT)
+            .unwrap();
+    }
+}
+
+fn map_key(key: Key) -> Option<usize> {
+    match key {
+        Key::Key1 => Some(1),
+        Key::Key2 => Some(2),
+        Key::Key3 => Some(3),
+        Key::Key4 => Some(12),
+        Key::Q => Some(4),
+        Key::W => Some(5),
+        Key::E => Some(6),
+        Key::R => Some(13),
+        Key::A => Some(7),
+        Key::S => Some(8),
+        Key::D => Some(9),
+        Key::F => Some(14),
+        Key::Z => Some(10),
+        Key::X => Some(0),
+        Key::C => Some(11),
+        Key::V => Some(15),
+        _ => None,
+    }
+}

@@ -1,4 +1,3 @@
-use rand::Rng;
 use std::vec::Vec;
 
 const MEMORY_SIZE: usize = 4096;
@@ -226,7 +225,7 @@ impl Cpu {
             }
             // set VX = random number & NN
             (0xC, _, _, _) => {
-                let random_num: u8 = rand::thread_rng().gen();
+                let random_num: u8 = rand::random();
                 self.registers[x] = random_num & nn;
             }
             // display/draw
