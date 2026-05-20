@@ -7,6 +7,12 @@ For the frontend, I used the [minifb](https://github.com/emoon/rust_minifb) crat
 ## Usage
 Run `cargo run $PROGRAM_FILENAME` to run a Chip-8 program. On Windows, make sure [C++ build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) are installed to run Rust programs.
 
+For the browser:
+```bash
+wasm-pack build --target web
+python3 -m http.server
+```
+
 ## Future Work
 * Fix tests from https://github.com/Timendus/chip8-test-suite:
     * Interpreter doesn't address Chip-8 quirks
