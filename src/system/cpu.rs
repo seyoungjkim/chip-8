@@ -299,10 +299,10 @@ impl Cpu {
                     self.pc -= 2;
                 }
             }
-            // index stores hex character in VX
+            // index stores address of hex character in VX
             (0xF, _, 2, 9) => {
                 let char_address = (self.registers[x] * 5 + 80) as usize;
-                self.i = self.memory[char_address] as u16;
+                self.i = char_address as u16;
             }
             // store digits of VX in memory
             (0xF, _, 3, 3) => {
