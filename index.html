@@ -18,6 +18,7 @@
         const buffer = await file.arrayBuffer();
         const rom_data = new Uint8Array(buffer);
         run_chip_8(rom_data);
+        document.querySelector('#CHIP-8 canvas')?.focus();
       });
     </script>
   </body>
