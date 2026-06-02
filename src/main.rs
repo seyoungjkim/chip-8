@@ -14,5 +14,5 @@ fn main() {
     let rom_file_path = &args[1];
     print!("Playing rom {}\n", rom_file_path);
     let rom_data = fs::read(rom_file_path).expect("Error reading file");
-    system::run_chip_8(rom_data);
+    system::initialize_and_run_chip_8(rom_data);
 }

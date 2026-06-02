@@ -16,10 +16,7 @@
       document.getElementById("rom-input").addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        const buffer = await file.arrayBuffer();
-        const rom_data = new Uint8Array(buffer);
-        load_rom_data(rom_data);
+        load_rom_data(new Uint8Array(await file.arrayBuffer()));
         document.querySelector('#CHIP-8 canvas')?.focus();
       });
     </script>

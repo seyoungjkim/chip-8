@@ -10,7 +10,7 @@ const STARTING_ADDRESS: u16 = 0x200;
 const FONT_SIZE: usize = 80;
 const INSTRUCTIONS_PER_SEC: u16 = 500;
 
-pub struct Cpu {
+pub(crate) struct Cpu {
     // Memory: CHIP-8 has direct access to up to 4 kilobytes of RAM
     memory: [u8; MEMORY_SIZE],
     // Display: 64 x 32 pixels (or 128 x 64 for SUPER-CHIP) monochrome, ie. black or white
