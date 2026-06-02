@@ -7,7 +7,7 @@ const NUM_KEYS: usize = 16;
 const STARTING_ADDRESS: u16 = 0x200;
 const FONT_SIZE: usize = 80;
 const FONT_START: usize = 0x50;
-const CYCLES_PER_FRAME: u16 = 500;
+const CYCLES_PER_FRAME: u16 = 100;
 
 pub(crate) struct Cpu {
     // Memory: CHIP-8 has direct access to up to 4 kilobytes of RAM

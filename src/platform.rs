@@ -1,4 +1,4 @@
-mod chip8;
+use super::chip8;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub struct TerminalInterpreter {
@@ -52,7 +52,7 @@ impl WasmInterpreter {
         let interpreter = self.interpreter.clone();
         interpreter.borrow_mut().load_rom_data(&rom_data);
 
-        if self.started { return; };
+        if self.started { return; }
         self.started = true;
 
         // Start game loop
@@ -61,7 +61,7 @@ impl WasmInterpreter {
                 .expect("no global `window` exists")
                 .request_animation_frame(f.as_ref().unchecked_ref())
                 .expect("should register `requestAnimationFrame` OK");
-            }
+        }
 
         let f = Rc::new(RefCell::new(None));
         let g = f.clone();

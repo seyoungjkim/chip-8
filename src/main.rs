@@ -1,7 +1,8 @@
 use std::env;
 use std::fs;
 
-mod system;
+mod chip8;
+mod platform;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -14,6 +15,6 @@ fn main() {
     let rom_file_path = &args[1];
     println!("Playing rom {}", rom_file_path);
     let rom_data = fs::read(rom_file_path).expect("Error reading file");
-    let mut interpreter = system::TerminalInterpreter::new();
+    let mut interpreter = platform::TerminalInterpreter::new();
     interpreter.run_chip_8(rom_data);
 }
