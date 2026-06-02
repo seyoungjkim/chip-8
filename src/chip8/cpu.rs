@@ -7,7 +7,6 @@ const NUM_KEYS: usize = 16;
 const STARTING_ADDRESS: u16 = 0x200;
 const FONT_SIZE: usize = 80;
 const FONT_START: usize = 0x50;
-const CYCLES_PER_FRAME: u16 = 100;
 
 pub(crate) struct Cpu {
     // Memory: CHIP-8 has direct access to up to 4 kilobytes of RAM
@@ -80,19 +79,16 @@ impl Cpu {
         self.memory[start..end].copy_from_slice(rom);
     }
 
-    pub fn tick(&mut self) {
-        self.decrement_timers();
-        for _ in 0..CYCLES_PER_FRAME {
-            let ins = self.fetch();
-            self.decode_and_execute(ins);
-        }
+    pub fn step_cpu(&mut self) {
+        let ins = self.fetch();
+        self.decode_and_execute(ins);
     }
 
     pub fn display(&self) -> &[bool] {
         &self.display
     }
 
-    fn decrement_timers(&mut self) {
+    pub fn decrement_timers(&mut self) {
         if self.delay_timer > 0 {
             self.delay_timer -= 1;
         }

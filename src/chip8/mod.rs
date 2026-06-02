@@ -4,6 +4,7 @@ mod cpu;
 const SCALE: usize = 20;
 const WINDOW_WIDTH: usize = cpu::DISPLAY_WIDTH * SCALE;
 const WINDOW_HEIGHT: usize = cpu::DISPLAY_HEIGHT * SCALE;
+const CYCLES_PER_SECOND: u16 = 700;
 
 pub struct Chip8 {
     cpu: cpu::Cpu,
@@ -28,7 +29,7 @@ impl Chip8 {
         self.cpu.load_rom(rom_data);
     }
 
-    pub fn run_game_loop(&mut self) {
+    pub fn run_game_loop(&mut self, seconds_since_last_frame: f64) {
         for key in self.window.get_keys_pressed(KeyRepeat::No) {
             if let Some(i) = map_key(key) {
                 self.cpu.press_key(i);
@@ -40,7 +41,11 @@ impl Chip8 {
             }
         }
 
-        self.cpu.tick();
+        self.cpu.decrement_timers();
+        let cycles = (CYCLES_PER_SECOND as f64 * seconds_since_last_frame).round() as u32;
+        for _ in 0..cycles {
+            self.cpu.step_cpu();
+        }
 
         for (index, is_on) in self.cpu.display().iter().enumerate() {
             let x = (index % cpu::DISPLAY_WIDTH) as usize;

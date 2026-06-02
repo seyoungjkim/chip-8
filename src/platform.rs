@@ -15,8 +15,11 @@ impl TerminalInterpreter {
 
     pub fn run_chip_8(&mut self, rom_data: Vec<u8>) {
         self.interpreter.load_rom_data(&rom_data);
+        let mut t = std::time::Instant::now();
         while self.interpreter.is_running() {
-            self.interpreter.run_game_loop();
+            let seconds_since_last_frame = t.elapsed().as_secs_f64();
+            t = std::time::Instant::now();
+            self.interpreter.run_game_loop(seconds_since_last_frame);
         }
     }
 }
@@ -65,8 +68,12 @@ impl WasmInterpreter {
 
         let f = Rc::new(RefCell::new(None));
         let g = f.clone();
+        let mut start = web_sys::window().unwrap().performance().unwrap().now() / 1000.0;
         *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-            interpreter.borrow_mut().run_game_loop();
+            let end = web_sys::window().unwrap().performance().unwrap().now() / 1000.0;
+            let seconds_since_last_frame = end - start;
+            start = end;
+            interpreter.borrow_mut().run_game_loop(seconds_since_last_frame);
             if interpreter.borrow().is_running() {
                 request_animation_frame(f.borrow().as_ref().unwrap());
             }
