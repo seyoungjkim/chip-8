@@ -25,7 +25,7 @@ impl Chip8 {
         }
     }
 
-    pub fn load_rom(&mut self, rom_data: &[u8]) {
+    pub fn load_rom_data(&mut self, rom_data: &[u8]) {
         self.cpu = cpu::Cpu::new(); // reset CPU
         self.cpu.load_rom(rom_data);
         self.rom_loaded = true;
@@ -67,7 +67,6 @@ impl Chip8 {
             .unwrap();
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     pub fn is_running(&self) -> bool {
         self.window.is_open() && !self.window.is_key_down(Key::Escape)
     }

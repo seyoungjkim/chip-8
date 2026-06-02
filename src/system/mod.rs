@@ -1,12 +1,23 @@
 mod chip8;
-use chip8::Chip8;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn initialize_and_run_chip_8(rom_data: Vec<u8>) {
-    let mut chip_8 = Chip8::new();
-    chip_8.load_rom(&rom_data);
-    while chip_8.is_running() {
-        chip_8.run_game_loop();
+pub struct TerminalInterpreter {
+    chip8: chip8::Chip8,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl TerminalInterpreter {
+    pub fn new() -> TerminalInterpreter {
+        TerminalInterpreter {
+            chip8: chip8::Chip8::new()
+        }
+    }
+
+    pub fn load_rom_data_and_run_chip_8(&mut self, rom_data: Vec<u8>) {
+        self.chip8.load_rom_data(&rom_data);
+        while self.chip8.is_running() {
+            self.chip8.run_game_loop();
+        }
     }
 }
 
@@ -14,32 +25,45 @@ pub fn initialize_and_run_chip_8(rom_data: Vec<u8>) {
 use {
     std::cell::RefCell,
     std::rc::Rc,
-    wasm_bindgen::prelude::Closure,
+    wasm_bindgen::prelude::*,
     wasm_bindgen::JsCast,
 };
 
 #[cfg(target_arch = "wasm32")]
-thread_local! {
-    static CHIP8: RefCell<Option<Chip8>> = RefCell::new(None);
+#[wasm_bindgen]
+pub struct WasmInterpreter {
+    chip8: Rc<RefCell<chip8::Chip8>>,
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn run_chip_8() {
-    CHIP8.with(|c| *c.borrow_mut() = Some(Chip8::new()));
+#[wasm_bindgen]
+impl WasmInterpreter {
 
-    let f = Rc::new(RefCell::new(None));
-    let g = f.clone();
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> WasmInterpreter {
+        WasmInterpreter {
+            chip8: Rc::new(RefCell::new(chip8::Chip8::new()))
+        }
+    }
 
-    *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-        CHIP8.with(|c| {
-            if let Some(chip_8) = c.borrow_mut().as_mut() {
-                chip_8.run_game_loop();
+    pub fn run_chip_8(&mut self) {
+        let f = Rc::new(RefCell::new(None));
+        let g = f.clone();
+        let chip8 = self.chip8.clone();
+
+        *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
+            chip8.borrow_mut().run_game_loop();
+            if chip8.borrow_mut().is_running() {
+                request_animation_frame(f.borrow().as_ref().unwrap());
             }
-        });
-        request_animation_frame(f.borrow().as_ref().unwrap());
-    }) as Box<dyn FnMut() + 'static>));
+        }) as Box<dyn FnMut() + 'static>));
 
-    request_animation_frame(g.borrow().as_ref().unwrap());
+        request_animation_frame(g.borrow().as_ref().unwrap());
+    }
+
+    pub fn load_rom_data(&mut self, rom_data: Vec<u8>) {
+        self.chip8.borrow_mut().load_rom_data(&rom_data);
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -48,13 +72,4 @@ fn request_animation_frame(f: &Closure<dyn FnMut()>) {
         .expect("no global `window` exists")
         .request_animation_frame(f.as_ref().unchecked_ref())
         .expect("should register `requestAnimationFrame` OK");
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn load_rom_data(rom_data: Vec<u8>) {
-    CHIP8.with(|c| {
-        if let Some(chip_8) = c.borrow_mut().as_mut() {
-            chip_8.load_rom(&rom_data);
-        }
-    });
 }
