@@ -6,6 +6,7 @@ const NUM_KEYS: usize = 16;
 
 const STARTING_ADDRESS: u16 = 0x200;
 const FONT_SIZE: usize = 80;
+const FONT_START: usize = 0x50;
 const CYCLES_PER_FRAME: u16 = 500;
 
 pub(crate) struct Cpu {
@@ -51,7 +52,7 @@ const FONT: [u8; FONT_SIZE] = [
 impl Cpu {
     pub fn new() -> Cpu {
         let mut memory = [0; MEMORY_SIZE];
-        memory[80..160].clone_from_slice(&FONT);
+        memory[FONT_START..FONT_START + FONT_SIZE].copy_from_slice(&FONT);
         Cpu {
             memory,
             display: [false; DISPLAY_WIDTH * DISPLAY_HEIGHT],
@@ -74,21 +75,21 @@ impl Cpu {
     }
 
     pub fn load_rom(&mut self, rom: &[u8]) {
-        let start: usize = STARTING_ADDRESS as usize;
-        let end: usize = STARTING_ADDRESS as usize + rom.len();
+        let start = STARTING_ADDRESS as usize;
+        let end = STARTING_ADDRESS as usize + rom.len();
         self.memory[start..end].copy_from_slice(rom);
     }
 
     pub fn tick(&mut self) {
         self.decrement_timers();
         for _ in 0..CYCLES_PER_FRAME {
-            let ins: u16 = self.fetch();
+            let ins = self.fetch();
             self.decode_and_execute(ins);
         }
     }
 
     pub fn display(&self) -> &[bool] {
-        return &self.display;
+        &self.display
     }
 
     fn decrement_timers(&mut self) {
@@ -120,9 +121,7 @@ impl Cpu {
         match (opcode, x, y, n) {
             // clear screen
             (0, 0, 0xE, 0) => {
-                for pixel in self.display.iter_mut() {
-                    *pixel = false;
-                }
+                self.display.fill(false);
             }
             // return from subroutine
             (0, 0, 0xE, 0xE) => {
@@ -176,28 +175,28 @@ impl Cpu {
             }
             // set VX = VX OR VY
             (8, _, _, 1) => {
-                self.registers[x] = self.registers[x] | self.registers[y];
+                self.registers[x] |= self.registers[y];
             }
             // set VX = VX AND VY
             (8, _, _, 2) => {
-                self.registers[x] = self.registers[x] & self.registers[y];
+                self.registers[x] &= self.registers[y];
             }
             // set VX = VX XOR VY
             (8, _, _, 3) => {
-                self.registers[x] = self.registers[x] ^ self.registers[y];
+                self.registers[x] ^= self.registers[y];
             }
             // set VX = VX + VY
             (8, _, _, 4) => {
                 let (new_vx_value, result_overflowed) =
                     self.registers[x].overflowing_add(self.registers[y]);
                 self.registers[x] = new_vx_value;
-                self.registers[0xF] = if result_overflowed { 1 } else { 0 };
+                self.registers[0xF] = result_overflowed as u8;
             }
             // set VX = VX - VY
             (8, _, _, 5) => {
                 let (diff, borrow) = self.registers[x].overflowing_sub(self.registers[y]);
                 self.registers[x] = diff;
-                self.registers[0xF] = if borrow { 0 } else { 1 };
+                self.registers[0xF] = (!borrow) as u8;
             }
             // shift VX 1 bit right
             (8, _, _, 6) => {
@@ -209,7 +208,7 @@ impl Cpu {
             (8, _, _, 7) => {
                 let (diff, borrow) = self.registers[y].overflowing_sub(self.registers[x]);
                 self.registers[x] = diff;
-                self.registers[0xF] = if borrow { 0 } else { 1 };
+                self.registers[0xF] = (!borrow) as u8;
             }
             // shift VX 1 bit left
             (8, _, _, 0xE) => {
@@ -283,15 +282,15 @@ impl Cpu {
             }
             // set index = index + VX
             (0xF, _, 1, 0xE) => {
-                self.i = self.i + (self.registers[x] as u16);
-                self.registers[0xF] = if self.i > 0x0FFF { 1 } else { 0 };
+                self.i += self.registers[x] as u16;
+                self.registers[0xF] = (self.i > 0x0FFF) as u8;
             }
             // block until key is pressed
             // TODO: only advance when key is pressed then released. Need some way to track this.
             (0xF, _, 0, 0xA) => {
                 let mut is_key_pressed = false;
-                for k in 0..self.keys.len() {
-                    if self.keys[k] {
+                for (k, pressed) in self.keys.iter().enumerate() {
+                    if *pressed {
                         self.registers[x] = k as u8;
                         is_key_pressed = true;
                         break;
@@ -303,8 +302,7 @@ impl Cpu {
             }
             // index stores address of hex character in VX
             (0xF, _, 2, 9) => {
-                let char_address = (self.registers[x] * 5 + 80) as usize;
-                self.i = char_address as u16;
+                self.i = FONT_START as u16 + self.registers[x] as u16 * 5;
             }
             // store digits of VX in memory
             (0xF, _, 3, 3) => {
@@ -314,17 +312,17 @@ impl Cpu {
             }
             // store register values in memory
             (0xF, _, 5, 5) => {
-                for j in 0..x+1 {
+                for j in 0..=x {
                     self.memory[self.i as usize + j] = self.registers[j];
                 }
             }
             // load register values from memory
             (0xF, _, 6, 5) => {
-                for j in 0..x+1 {
+                for j in 0..=x {
                     self.registers[j] = self.memory[self.i as usize + j];
                 }
             }
-            _ => return,
+            _ => {},
         }
     }
 }

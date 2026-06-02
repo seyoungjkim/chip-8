@@ -1,15 +1,14 @@
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
 mod cpu;
 
-pub const SCALE: usize = 20;
-pub const WINDOW_WIDTH: usize = cpu::DISPLAY_WIDTH * SCALE;
-pub const WINDOW_HEIGHT: usize = cpu::DISPLAY_HEIGHT * SCALE;
+const SCALE: usize = 20;
+const WINDOW_WIDTH: usize = cpu::DISPLAY_WIDTH * SCALE;
+const WINDOW_HEIGHT: usize = cpu::DISPLAY_HEIGHT * SCALE;
 
 pub struct Chip8 {
     cpu: cpu::Cpu,
     buffer: Vec<u32>,
     window: Window,
-    rom_loaded: bool,
 }
 
 impl Chip8 {
@@ -20,7 +19,6 @@ impl Chip8 {
         Chip8 {
             cpu: cpu::Cpu::new(),
             buffer: vec![0; WINDOW_WIDTH * WINDOW_HEIGHT],
-            rom_loaded: false,
             window,
         }
     }
@@ -28,15 +26,9 @@ impl Chip8 {
     pub fn load_rom_data(&mut self, rom_data: &[u8]) {
         self.cpu = cpu::Cpu::new(); // reset CPU
         self.cpu.load_rom(rom_data);
-        self.rom_loaded = true;
     }
 
     pub fn run_game_loop(&mut self) {
-        if !self.rom_loaded {
-            self.window.update_with_buffer(&self.buffer, WINDOW_WIDTH, WINDOW_HEIGHT).unwrap();
-            return;
-        }
-
         for key in self.window.get_keys_pressed(KeyRepeat::No) {
             if let Some(i) = map_key(key) {
                 self.cpu.press_key(i);
