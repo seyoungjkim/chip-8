@@ -18,7 +18,6 @@ python3 -m http.server
     * Interpreter doesn't address Chip-8 quirks
     * Interpreter doesn't wait for key release (Fx0A GETKEY)
 * Implement sound timer
-* Fix browser multiple display issue
 
 ## Resources Used
 * https://tobiasvl.github.io/blog/write-a-chip-8-emulator/

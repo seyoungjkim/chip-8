@@ -1,5 +1,3 @@
-use std::vec::Vec;
-
 const MEMORY_SIZE: usize = 4096;
 const NUM_REGISTERS: usize = 16;
 pub const DISPLAY_WIDTH: usize = 64;
@@ -8,13 +6,13 @@ const NUM_KEYS: usize = 16;
 
 const STARTING_ADDRESS: u16 = 0x200;
 const FONT_SIZE: usize = 80;
-const INSTRUCTIONS_PER_SEC: u16 = 500;
+const CYCLES_PER_FRAME: u16 = 500;
 
 pub(crate) struct Cpu {
     // Memory: CHIP-8 has direct access to up to 4 kilobytes of RAM
     memory: [u8; MEMORY_SIZE],
     // Display: 64 x 32 pixels (or 128 x 64 for SUPER-CHIP) monochrome, ie. black or white
-    pub display: [bool; DISPLAY_WIDTH * DISPLAY_HEIGHT],
+    display: [bool; DISPLAY_WIDTH * DISPLAY_HEIGHT],
     // A program counter, often called just “PC”, which points at the current instruction in memory
     pc: u16,
     // One 16-bit index register called “I” which is used to point at locations in memory
@@ -68,11 +66,11 @@ impl Cpu {
     }
 
     pub fn press_key(&mut self, key: usize) {
-        self.keys[key] = true;
+        if key < NUM_KEYS { self.keys[key] = true; }
     }
 
     pub fn release_key(&mut self, key: usize) {
-        self.keys[key] = false
+        if key < NUM_KEYS { self.keys[key] = false; }
     }
 
     pub fn load_rom(&mut self, rom: &[u8]) {
@@ -81,12 +79,16 @@ impl Cpu {
         self.memory[start..end].copy_from_slice(rom);
     }
 
-    pub fn run_loop(&mut self) {
+    pub fn tick(&mut self) {
         self.decrement_timers();
-        for _ in 0..INSTRUCTIONS_PER_SEC {
+        for _ in 0..CYCLES_PER_FRAME {
             let ins: u16 = self.fetch();
             self.decode_and_execute(ins);
         }
+    }
+
+    pub fn display(&self) -> &[bool] {
+        return &self.display;
     }
 
     fn decrement_timers(&mut self) {
@@ -311,13 +313,13 @@ impl Cpu {
                 self.memory[self.i as usize + 2] = self.registers[x] % 10;
             }
             // store register values in memory
-            (0xF, x, 5, 5) => {
+            (0xF, _, 5, 5) => {
                 for j in 0..x+1 {
                     self.memory[self.i as usize + j] = self.registers[j];
                 }
             }
             // load register values from memory
-            (0xF, x, 6, 5) => {
+            (0xF, _, 6, 5) => {
                 for j in 0..x+1 {
                     self.registers[j] = self.memory[self.i as usize + j];
                 }
