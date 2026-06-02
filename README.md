@@ -17,8 +17,8 @@ python3 -m http.server
 * Fix tests from https://github.com/Timendus/chip8-test-suite:
     * Interpreter doesn't address Chip-8 quirks
     * Interpreter doesn't wait for key release (Fx0A GETKEY)
-* Make sound timer beep
-* Port to browser
+* Implement sound timer
+* Fix browser multiple display issue
 
 ## Resources Used
 * https://tobiasvl.github.io/blog/write-a-chip-8-emulator/
@@ -26,3 +26,4 @@ python3 -m http.server
 * https://github.com/corax89/chip8-test-rom
 * https://www.zophar.net/pdroms/chip8/chip-8-games-pack.html
 * https://github.com/Timendus/chip8-test-suite
+* https://github.com/dc740/minifb-async-examples/

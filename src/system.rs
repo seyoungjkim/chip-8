@@ -13,10 +13,11 @@ const SCALE: usize = 20;
 const WINDOW_WIDTH: usize = cpu::DISPLAY_WIDTH * SCALE;
 const WINDOW_HEIGHT: usize = cpu::DISPLAY_HEIGHT * SCALE;
 
-struct Chip8 {
+pub struct Chip8 {
     cpu: cpu::Cpu,
     buffer: Vec<u32>,
     window: Window,
+    rom_loaded: bool,
 }
 
 impl Chip8 {
@@ -24,6 +25,7 @@ impl Chip8 {
         Chip8 {
             cpu: cpu::Cpu::new(),
             buffer: vec![0; WINDOW_WIDTH * WINDOW_HEIGHT],
+            rom_loaded: false,
             window: Window::new(
                 "CHIP-8",
                 WINDOW_WIDTH,
@@ -36,8 +38,12 @@ impl Chip8 {
         }
     }
 
-    fn run_cpu_loop(&mut self) {
-        // Get keyboard input changes
+    fn run_game_loop(&mut self) {
+        if !self.rom_loaded {
+            self.window.update_with_buffer(&self.buffer, WINDOW_WIDTH, WINDOW_HEIGHT).unwrap();
+            return
+        }
+        // get keyboard input changes
         for key in self.window.get_keys_pressed(KeyRepeat::No) {
             match map_key(key) {
                 Some(i) => self.cpu.press_key(i),
@@ -50,10 +56,11 @@ impl Chip8 {
                 None => (),
             }
         };
-        self.cpu.run_loop();
-    }
 
-    fn render(&mut self) {
+        // run cpu
+        self.cpu.run_loop();
+
+        // update display buffer
         for (index, is_on) in self.cpu.display.iter().enumerate() {
             let x = (index % cpu::DISPLAY_WIDTH) as usize;
             let y = (index / cpu::DISPLAY_WIDTH) as usize;
@@ -80,24 +87,30 @@ pub fn run_chip_8(rom_data: Vec<u8>) {
     chip_8.cpu.load_rom(&rom_data);
     chip_8.window.set_target_fps(60);
     while chip_8.window.is_open() && !chip_8.window.is_key_down(Key::Escape) {
-        chip_8.run_cpu_loop();
-        chip_8.render();
+        chip_8.run_game_loop();
     }
 }
 
-#[cfg(target_arch = "wasm32")]
-pub fn run_chip_8(rom_data: Vec<u8>) {
-    let mut chip_8 = Chip8::new();
-    chip_8.cpu.load_rom(&rom_data);
-    chip_8.window.set_target_fps(60);
+thread_local! {
+    static CHIP8: RefCell<Option<Chip8>> = RefCell::new(None);
+}
 
+// See https://github.com/dc740/minifb-async-examples/blob/main/web_app/src/web_setup/mod.rs
+pub fn run_chip_8_wasm() {
+    // Initialize interpreter
+    let mut chip_8 = Chip8::new();
+    chip_8.window.set_target_fps(60);
+    CHIP8.with(|c| *c.borrow_mut() = Some(chip_8));
+
+    // create the closure for updating and rendering the game
     let f = Rc::new(RefCell::new(None));
     let g = f.clone();
-
-    // create the closure for updating and rendering the game.
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-        chip_8.run_cpu_loop();  // run N cycles
-        chip_8.render(); // update_with_buffer
+        CHIP8.with(|c| {
+            if let Some(chip_8) = c.borrow_mut().as_mut() {
+                chip_8.run_game_loop();
+            }
+        });
         // schedule this closure for running again at next frame
         request_animation_frame(f.borrow().as_ref().unwrap());
     }) as Box<dyn FnMut() + 'static>));
@@ -111,6 +124,16 @@ fn request_animation_frame(f: &Closure<dyn FnMut()>) {
             .request_animation_frame(f.as_ref().unchecked_ref())
             .expect("should register `requestAnimationFrame` OK");
     }
+
+pub fn load_rom_data(rom_data: Vec<u8>) {
+    CHIP8.with(|c| {
+          if let Some(chip_8) = c.borrow_mut().as_mut() {
+              chip_8.rom_loaded = true;
+              chip_8.cpu = cpu::Cpu::new();
+              chip_8.cpu.load_rom(&rom_data);
+          }
+    });
+}
 
 fn map_key(key: Key) -> Option<usize> {
     match key {

@@ -8,16 +8,18 @@
     <input type="file" id="rom-input" accept=".ch8" />
     <div id="CHIP-8"></div>
     <script type="module">
-      import init, { run_chip_8 } from "./pkg/chip_8.js";
+      import init, { run_chip_8, load_rom_data } from "./pkg/chip_8.js";
 
-      await init()
+      await init();
+      run_chip_8();
+
       document.getElementById("rom-input").addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         const buffer = await file.arrayBuffer();
         const rom_data = new Uint8Array(buffer);
-        run_chip_8(rom_data);
+        load_rom_data(rom_data);
         document.querySelector('#CHIP-8 canvas')?.focus();
       });
     </script>
