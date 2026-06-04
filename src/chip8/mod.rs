@@ -55,6 +55,8 @@ impl Chip8 {
             for i in x_coord..x_coord + SCALE {
                 for j in y_coord..y_coord + SCALE {
                     self.buffer[i + WINDOW_WIDTH * j] =
+                        // originally was if *is_on { 0xFFFFFF } else { 0 }
+                        // however for WASM we must set alpha bits to FF (opaque!)
                         if *is_on { 0xFF_FF_FF_FF } else { 0xFF_00_00_00 };
                 }
             }
