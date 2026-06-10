@@ -48,8 +48,8 @@ impl Chip8 {
         }
 
         for (index, is_on) in self.cpu.display().iter().enumerate() {
-            let x = (index % cpu::DISPLAY_WIDTH) as usize;
-            let y = (index / cpu::DISPLAY_WIDTH) as usize;
+            let x = index % cpu::DISPLAY_WIDTH;
+            let y = index / cpu::DISPLAY_WIDTH;
             let x_coord = x * SCALE;
             let y_coord = y * SCALE;
             for i in x_coord..x_coord + SCALE {
